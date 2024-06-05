@@ -47,11 +47,12 @@ async function run() {
 
     // <--- Contest related API --->
 
+    // get all contest API
     app.get('/contest', async (req, res) => {
       const result = await contestsCollection.find().toArray()
       res.send(result)
     })
-
+    // get particular contest API
     app.get('/contest/:id', async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
@@ -62,12 +63,14 @@ async function run() {
 
     // <--- Users related API --->
 
+    // to get all users
     app.get('/users', async (req, res) => {
       console.log(req.headers)
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
 
+    // to get the admin from users
     app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email      
       const query = { email: email }
@@ -79,7 +82,6 @@ async function run() {
       console.log(admin)
       res.send({ admin })
     })
-
 
     // to add non existed user
     app.post('/users', async (req, res) => {
@@ -108,6 +110,31 @@ async function run() {
       const updatedDoc = {
         $set: {
           role: 'admin'
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updatedDoc)
+      res.send(result)
+    })
+    // to make user Creator
+    app.patch('/users/creator/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          role: 'creator'
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updatedDoc)
+      res.send(result)
+    })
+
+    // to make user a user
+    app.patch('/users/user/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          role: 'user'
         }
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
