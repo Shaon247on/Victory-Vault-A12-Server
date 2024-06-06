@@ -44,6 +44,33 @@ async function run() {
     })
 
 
+    // verify token middlewares
+    const verifyToken = (req, res, next) => {
+      console.log('inside verify token', req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: 'Unauthorized Access' })
+      }
+      const token = req.headers.authorization.split(' ')[1]
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(403).send({ message: 'Forbidden Access' })
+        }
+        req.decoded = decoded
+        next()
+      })
+    }
+
+    // use Verify admin after verifyToken 
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email
+      const query = { email: email }
+      const result = await usersCollection.findOne(query)
+      const isAdmin = result?.role === 'admin'
+      if (!isAdmin) {
+        return res.status(403).send({ message: "Forbidden Access" })
+      }
+      next()
+    }
 
     // <--- Contest related API --->
 
@@ -71,17 +98,63 @@ async function run() {
     })
 
     // to get the admin from users
-    app.get('/users/admin/:email', async (req, res) => {
-      const email = req.params.email      
+    app.get('/users/admin/:email',verifyToken, async (req, res) => {
+      const email = req.params.email
+      console.log(email);
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'Forbidden Access' })
+      }
       const query = { email: email }
       const user = await usersCollection.findOne(query)
+      console.log('admin check user:', user)
       let admin = false
       if (user) {
         admin = user?.role === 'admin'
       }
-      console.log(admin)
+      console.log('admin is:',admin)
       res.send({ admin })
     })
+
+    
+    // to get the creator from users
+    app.get('/users/creator/:email',verifyToken, async (req, res) => {
+      const email = req.params.email
+      console.log(email);
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'Forbidden Access' })
+      }
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      console.log('creator check user:', user)
+      let creator = false
+      if (user) {
+        creator = user?.role === 'creator'
+      }
+      console.log('creator is:',creator)
+      res.send({ creator })
+    })
+
+
+    app.get('/users/admin/:email', async (req, res) => {
+      const email = req.params.email
+      console.log(email);
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'Forbidden Access' })
+      }
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      console.log('admin check user:', user)
+      let admin = false
+      if (user) {
+        admin = user?.role === 'admin'
+      }
+      console.log('admin is:',admin)
+      res.send({ admin })
+    })
+
+
+
+
 
     // to add non existed user
     app.post('/users', async (req, res) => {
