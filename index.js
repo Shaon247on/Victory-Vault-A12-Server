@@ -79,6 +79,7 @@ async function run() {
       const result = await contestsCollection.find().toArray()
       res.send(result)
     })
+
     // get particular contest API
     app.get('/contest/:id', async (req, res) => {
       const id = req.params.id
@@ -87,12 +88,57 @@ async function run() {
       res.send(result)
     })
 
+    //get Particular contest with approval
+    app.get('/contests/approved', async(req,res)=>{
+      const query = {Approval: true}
+      const result = await contestsCollection.find(query).toArray()
+      console.log(result);
+      res.send(result)
+    })
+
+    //to approve the contest API
+    app.patch('/contest/:id', async(req,res)=>{
+      const id = req.params.id
+      const filter = {_id: new ObjectId(id)}
+      const option = {upsert: false }
+      const updateDoc ={
+        $set:{
+          Approval : true
+        }
+      }
+      const result = await contestsCollection.updateOne(filter, updateDoc, option)
+      res.send(result)
+    })
+
+    //to set comment to the contest API
+    app.patch('/contest/comment/:id', async(req,res)=>{
+      const id = req.params.id
+      const comment = req.body.comment
+      console.log('comment is:',comment);
+      const filter = {_id: new ObjectId(id)}
+      const option = {upsert: true }
+      const updateDoc ={
+        $set:{
+          Comment : comment
+        }
+      }
+      const result = await contestsCollection.updateOne(filter, updateDoc, option)
+      res.send(result)
+    })
+
+    // delete a particular contest
+    app.delete('/contest/:id', async(req,res)=>{
+      const id = req.params.id
+      const query = {_id: new ObjectId(id)}
+      const result = await contestsCollection.deleteOne(query)
+      res.send(result)
+    })
+
 
     // <--- Users related API --->
 
     // to get all users
     app.get('/users', async (req, res) => {
-      console.log(req.headers)
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
@@ -100,59 +146,51 @@ async function run() {
     // to get the admin from users
     app.get('/users/admin/:email',verifyToken, async (req, res) => {
       const email = req.params.email
-      console.log(email);
       if (email !== req.decoded.email) {
         return res.status(403).send({ message: 'Forbidden Access' })
       }
       const query = { email: email }
       const user = await usersCollection.findOne(query)
-      console.log('admin check user:', user)
       let admin = false
       if (user) {
         admin = user?.role === 'admin'
       }
-      console.log('admin is:',admin)
       res.send({ admin })
     })
-
     
     // to get the creator from users
     app.get('/users/creator/:email',verifyToken, async (req, res) => {
       const email = req.params.email
-      console.log(email);
       if (email !== req.decoded.email) {
         return res.status(403).send({ message: 'Forbidden Access' })
       }
       const query = { email: email }
       const user = await usersCollection.findOne(query)
-      console.log('creator check user:', user)
       let creator = false
       if (user) {
         creator = user?.role === 'creator'
       }
-      console.log('creator is:',creator)
       res.send({ creator })
     })
 
-
-    app.get('/users/admin/:email', async (req, res) => {
+    //  to get the user from users
+    app.get('/users/user/:email', async (req, res) => {
       const email = req.params.email
       console.log(email);
-      if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'Forbidden Access' })
-      }
       const query = { email: email }
-      const user = await usersCollection.findOne(query)
-      console.log('admin check user:', user)
-      let admin = false
-      if (user) {
-        admin = user?.role === 'admin'
+      const account = await usersCollection.findOne(query)
+      console.log('user check user:', account)
+      let user = false
+      if (account) {
+        user = account?.role === 'user'
       }
-      console.log('admin is:',admin)
-      res.send({ admin })
+      console.log('user is:',user)
+      res.send({ user })
     })
 
 
+
+    
 
 
 
@@ -187,19 +225,7 @@ async function run() {
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
       res.send(result)
-    })
-    // to make user Creator
-    app.patch('/users/creator/:id', async (req, res) => {
-      const id = req.params.id
-      const filter = { _id: new ObjectId(id) }
-      const updatedDoc = {
-        $set: {
-          role: 'creator'
-        }
-      }
-      const result = await usersCollection.updateOne(filter, updatedDoc)
-      res.send(result)
-    })
+    })    
 
     // to make user a user
     app.patch('/users/user/:id', async (req, res) => {
@@ -225,6 +251,21 @@ async function run() {
         }
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
+      res.send(result)
+    })
+
+    app.patch('/user/block/:id', async(req,res)=>{
+      const id = req.params.id
+      const status = req.body.toggle
+      console.log('status is:',status);
+      const filter = {_id: new ObjectId(id)}
+      const option = {upsert: true }
+      const updateDoc ={
+        $set:{
+          Status : status
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc, option)
       res.send(result)
     })
 
