@@ -126,6 +126,14 @@ async function run() {
       res.send(result)
     })
 
+    app.post('/contest', async(req,res)=>{
+      const contest = req.body
+      const result = await contestsCollection.insertOne(contest)
+      res.send(result)
+      
+
+    })
+
     // delete a particular contest
     app.delete('/contest/:id', async(req,res)=>{
       const id = req.params.id
