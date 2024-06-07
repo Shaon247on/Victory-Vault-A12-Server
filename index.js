@@ -72,7 +72,20 @@ async function run() {
       next()
     }
 
-    // <--- Contest related API --->
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //          <-------- Contest related API -------->
 
     // get all contest API
     app.get('/contest', async (req, res) => {
@@ -89,30 +102,30 @@ async function run() {
     })
 
     //get Particular contest with approval
-    app.get('/contests/approved', async(req,res)=>{
-      const query = {Approval: true}
+    app.get('/contests/approved', async (req, res) => {
+      const query = { Approval: true }
       const result = await contestsCollection.find(query).toArray()
       console.log(result);
       res.send(result)
     })
 
     // to get particular creator's contest related API
-    app.get('/creator/contest/:email', async (req,res)=>{
+    app.get('/creator/contest/:email', async (req, res) => {
       const email = req.params.email
-      console.log('creator email:',email);
-      const query = {'Author.Email':email}
+      console.log('creator email:', email);
+      const query = { 'Author.Email': email }
       const result = await contestsCollection.find(query).toArray()
       res.send(result)
     })
 
     //to approve the contest API
-    app.patch('/contest/:id', async(req,res)=>{
+    app.patch('/contest/:id', async (req, res) => {
       const id = req.params.id
-      const filter = {_id: new ObjectId(id)}
-      const option = {upsert: false }
-      const updateDoc ={
-        $set:{
-          Approval : true
+      const filter = { _id: new ObjectId(id) }
+      const option = { upsert: false }
+      const updateDoc = {
+        $set: {
+          Approval: true
         }
       }
       const result = await contestsCollection.updateOne(filter, updateDoc, option)
@@ -120,15 +133,15 @@ async function run() {
     })
 
     //to set comment to the contest API
-    app.patch('/contest/comment/:id', async(req,res)=>{
+    app.patch('/contest/comment/:id', async (req, res) => {
       const id = req.params.id
       const comment = req.body.comment
-      console.log('comment is:',comment);
-      const filter = {_id: new ObjectId(id)}
-      const option = {upsert: true }
-      const updateDoc ={
-        $set:{
-          Comment : comment
+      console.log('comment is:', comment);
+      const filter = { _id: new ObjectId(id) }
+      const option = { upsert: true }
+      const updateDoc = {
+        $set: {
+          Comment: comment
         }
       }
       const result = await contestsCollection.updateOne(filter, updateDoc, option)
@@ -136,24 +149,59 @@ async function run() {
     })
 
     // contest adding related API
-    app.post('/contest', async(req,res)=>{
+    app.post('/contest', async (req, res) => {
       const contest = req.body
       const result = await contestsCollection.insertOne(contest)
       res.send(result)
-      
+
 
     })
 
     // delete a particular contest
-    app.delete('/contest/:id', async(req,res)=>{
+    app.delete('/contest/:id', async (req, res) => {
       const id = req.params.id
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const result = await contestsCollection.deleteOne(query)
       res.send(result)
     })
 
+    app.put('/update/contest/:id', async (req, res) => {
+      const contest = req.body
+      console.log('updated Contest:',contest)
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: false };
+      const { ContestName, tag, ContestFee, ContestDescription, Deadline, ContestPrize, Task } = contest
+      const updateDoc = {
+        $set: {
+          ContestName:ContestName,
+          ContestFee:ContestFee,          
+          ContestDescription:ContestDescription,
+          Deadline:Deadline,
+          ContestPrize:ContestPrize,
+          Task:Task,
+          tag:tag
+        },
+      };
+      const result = await contestsCollection.updateOne(filter,updateDoc, options)
+      res.send(result)
+    })
 
-    // <--- Users related API --->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //          <--------- Users related API -------->
 
     // to get all users
     app.get('/users', async (req, res) => {
@@ -161,8 +209,9 @@ async function run() {
       res.send(result)
     })
 
+
     // to get the admin from users
-    app.get('/users/admin/:email',verifyToken, async (req, res) => {
+    app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email
       if (email !== req.decoded.email) {
         return res.status(403).send({ message: 'Forbidden Access' })
@@ -175,9 +224,10 @@ async function run() {
       }
       res.send({ admin })
     })
-    
+
+
     // to get the creator from users
-    app.get('/users/creator/:email',verifyToken, async (req, res) => {
+    app.get('/users/creator/:email', verifyToken, async (req, res) => {
       const email = req.params.email
       if (email !== req.decoded.email) {
         return res.status(403).send({ message: 'Forbidden Access' })
@@ -191,6 +241,7 @@ async function run() {
       res.send({ creator })
     })
 
+
     //  to get the user from users
     app.get('/users/user/:email', async (req, res) => {
       const email = req.params.email
@@ -202,8 +253,10 @@ async function run() {
       if (account) {
         user = account?.role === 'user'
       }
-      console.log('user is:',user)
-      res.send({ user })})
+      console.log('user is:', user)
+      res.send({ user })
+    })
+
 
 
     // to add non existed user
@@ -218,6 +271,7 @@ async function run() {
       res.send(result)
     })
 
+
     //to delete users by Admin
     app.delete('/users/:id', async (req, res) => {
       const id = req.params.id
@@ -225,6 +279,7 @@ async function run() {
       const result = await usersCollection.deleteOne(query)
       res.send(result)
     })
+
 
     //to make user admin
     app.patch('/users/admin/:id', async (req, res) => {
@@ -237,7 +292,8 @@ async function run() {
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
       res.send(result)
-    })    
+    })
+
 
     // to make user a user
     app.patch('/users/user/:id', async (req, res) => {
@@ -253,6 +309,7 @@ async function run() {
     })
 
 
+
     //to make user contest creator
     app.patch('/users/creator/:id', async (req, res) => {
       const id = req.params.id
@@ -266,15 +323,17 @@ async function run() {
       res.send(result)
     })
 
-    app.patch('/user/block/:id', async(req,res)=>{
+
+
+    app.patch('/user/block/:id', async (req, res) => {
       const id = req.params.id
       const status = req.body.toggle
-      console.log('status is:',status);
-      const filter = {_id: new ObjectId(id)}
-      const option = {upsert: true }
-      const updateDoc ={
-        $set:{
-          Status : status
+      console.log('status is:', status);
+      const filter = { _id: new ObjectId(id) }
+      const option = { upsert: true }
+      const updateDoc = {
+        $set: {
+          Status: status
         }
       }
       const result = await usersCollection.updateOne(filter, updateDoc, option)
