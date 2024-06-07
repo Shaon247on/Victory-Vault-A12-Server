@@ -96,6 +96,15 @@ async function run() {
       res.send(result)
     })
 
+    // to get particular creator's contest related API
+    app.get('/creator/contest/:email', async (req,res)=>{
+      const email = req.params.email
+      console.log('creator email:',email);
+      const query = {'Author.Email':email}
+      const result = await contestsCollection.find(query).toArray()
+      res.send(result)
+    })
+
     //to approve the contest API
     app.patch('/contest/:id', async(req,res)=>{
       const id = req.params.id
@@ -126,6 +135,7 @@ async function run() {
       res.send(result)
     })
 
+    // contest adding related API
     app.post('/contest', async(req,res)=>{
       const contest = req.body
       const result = await contestsCollection.insertOne(contest)
@@ -193,13 +203,7 @@ async function run() {
         user = account?.role === 'user'
       }
       console.log('user is:',user)
-      res.send({ user })
-    })
-
-
-
-    
-
+      res.send({ user })})
 
 
     // to add non existed user
