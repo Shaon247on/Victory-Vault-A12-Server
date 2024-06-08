@@ -130,6 +130,14 @@ async function run() {
     })
 
 
+    app.get('/winner/contest/:email', async(req, res)=>{
+      const email = req.params.email
+      const query= {"ContestWinner.apply.Email": email}
+      const result = await contestsCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
 
 
 
@@ -218,7 +226,20 @@ async function run() {
     })
 
 
-
+    app.patch('/winner/contest/:id', async(req,res)=>{
+      const id = req.params.id
+      const user = req.body
+      const {Email,Name,Photo} = user
+      console.log('winner user:', Email,Name,Photo)
+      const filter = {_id: new ObjectId(id)}
+      const docUpdate = {
+        $set:{
+          ContestWinner: user
+        }
+      }
+      const result = await contestsCollection.updateOne(filter, docUpdate)
+      res.send(result)
+    })
 
 
 
