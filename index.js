@@ -3,11 +3,13 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const app = express();
+const stripe = require("stripe")('sk_test_51PMA7QA81dfuIgiUxVaApmetDQ5pqxvJcM1veavP369tMDe2LRtZuu7LpP6V9aA6fu3MX7tlHgQzfu71Rm8yr1gR00ENkx79NW')
 require('dotenv').config();
 const port = process.env.PORT || 5000
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 
 
 console.log(process.env.DB_USER);
@@ -118,6 +120,19 @@ async function run() {
       res.send(result)
     })
 
+
+    // to get applied contest for logged in user API
+    app.get('/applied/contest/:email', async(req,res)=>{
+      const email = req.params.email
+      const query = {"Applied.Email": email}
+      const result = await contestsCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
+
+
+
     //to approve the contest API
     app.patch('/contest/:id', async (req, res) => {
       const id = req.params.id
@@ -186,6 +201,26 @@ async function run() {
       const result = await contestsCollection.updateOne(filter,updateDoc, options)
       res.send(result)
     })
+
+
+
+    //Applied user post related API
+    app.put('/applied/contest/:id', async(req,res)=>{
+      const id= req.params.id
+      const user = req.body
+      console.log('applied user',id, user)
+     const filter = {_id: new ObjectId(id)}
+     const updateDoc = {
+      $push: { Applied: user }
+     }
+     const result = await contestsCollection.updateOne(filter,updateDoc)
+     res.send(result)
+    })
+
+
+
+
+
 
 
 
@@ -340,6 +375,34 @@ async function run() {
       res.send(result)
     })
 
+
+    //     <------ Card Payment related API -------->
+
+
+    
+    // app.post("/create-payment-intent", async (req, res) => {
+    //   const { price } = req.body;
+    //   const amount = parseInt(price * 100);
+    //   console.log(amount, 'amount inside the intent')
+
+    //   const paymentIntent = await stripe.paymentIntents.create({
+    //     amount: amount,
+    //     currency: "usd",
+    //     payment_method_types:['card'],
+    //     automatic_payment_methods: {enabled: true,
+    //     }
+    //   });
+
+    //   res.send({
+    //     clientSecret: paymentIntent
+    //   })
+    // });
+
+
+
+
+
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
