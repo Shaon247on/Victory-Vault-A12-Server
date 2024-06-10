@@ -70,16 +70,16 @@ async function run() {
     }
 
     // use Verify admin after verifyToken 
-    const verifyAdmin = async (req, res, next) => {
-      const email = req.decoded.email
-      const query = { email: email }
-      const result = await usersCollection.findOne(query)
-      const isAdmin = result?.role === 'admin'
-      if (!isAdmin) {
-        return res.status(403).send({ message: "Forbidden Access" })
-      }
-      next()
-    }
+    // const verifyAdmin = async (req, res, next) => {
+    //   const email = req.decoded.email
+    //   const query = { email: email }
+    //   const result = await usersCollection.findOne(query)
+    //   const isAdmin = result?.role === 'admin'
+    //   if (!isAdmin) {
+    //     return res.status(403).send({ message: "Forbidden Access" })
+    //   }
+    //   next()
+    // }
 
 
 
