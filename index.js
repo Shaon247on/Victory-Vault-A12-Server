@@ -7,7 +7,14 @@ const stripe = require("stripe")('sk_test_51PMA7QA81dfuIgiUxVaApmetDQ5pqxvJcM1ve
 require('dotenv').config();
 const port = process.env.PORT || 5000
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://assignment-12-supremacy.web.app',
+    'https://assignment-12-supremacy.firebaseapp.com'
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.static("public"));
 
@@ -48,14 +55,14 @@ async function run() {
 
     // verify token middlewares
     const verifyToken = (req, res, next) => {
-      console.log('inside verify token', req.headers.authorization);
+      // console.log('inside verify token', req.headers.authorization);
       if (!req.headers.authorization) {
         return res.status(401).send({ message: 'Unauthorized Access' })
       }
       const token = req.headers.authorization.split(' ')[1]
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
-          return res.status(403).send({ message: 'Forbidden Access' })
+          return res.status(401).send({ message: 'Unauthorized Access' })
         }
         req.decoded = decoded
         next()
@@ -122,17 +129,17 @@ async function run() {
 
 
     // to get applied contest for logged in user API
-    app.get('/applied/contest/:email', async(req,res)=>{
+    app.get('/applied/contest/:email', async (req, res) => {
       const email = req.params.email
-      const query = {"Applied.Email": email}
+      const query = { "Applied.Email": email }
       const result = await contestsCollection.find(query).toArray()
       res.send(result)
     })
 
 
-    app.get('/winner/contest/:email', async(req, res)=>{
+    app.get('/winner/contest/:email', async (req, res) => {
       const email = req.params.email
-      const query= {"ContestWinner.apply.Email": email}
+      const query = { "ContestWinner.apply.Email": email }
       const result = await contestsCollection.find(query).toArray()
       res.send(result)
     })
@@ -190,50 +197,51 @@ async function run() {
 
     app.put('/update/contest/:id', async (req, res) => {
       const contest = req.body
-      console.log('updated Contest:',contest)
+      console.log('updated Contest:', contest)
       const id = req.params.id
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: false };
       const { ContestName, tag, ContestFee, ContestDescription, Deadline, ContestPrize, Task } = contest
       const updateDoc = {
         $set: {
-          ContestName:ContestName,
-          ContestFee:ContestFee,          
-          ContestDescription:ContestDescription,
-          Deadline:Deadline,
-          ContestPrize:ContestPrize,
-          Task:Task,
-          tag:tag
+          ContestName: ContestName,
+          ContestFee: ContestFee,
+          ContestDescription: ContestDescription,
+          Deadline: Deadline,
+          ContestPrize: ContestPrize,
+          Task: Task,
+          tag: tag
         },
       };
-      const result = await contestsCollection.updateOne(filter,updateDoc, options)
+      const result = await contestsCollection.updateOne(filter, updateDoc, options)
       res.send(result)
     })
 
 
 
     //Applied user post related API
-    app.put('/applied/contest/:id', async(req,res)=>{
-      const id= req.params.id
+    app.put('/applied/contest/:id', async (req, res) => {
+      const id = req.params.id
       const user = req.body
-      console.log('applied user',id, user)
-     const filter = {_id: new ObjectId(id)}
-     const updateDoc = {
-      $push: { Applied: user }
-     }
-     const result = await contestsCollection.updateOne(filter,updateDoc)
-     res.send(result)
+      console.log('applied user', id, user)
+      //  const filter = {_id: new ObjectId(id)}
+      //  const updateDoc = {
+      //   $push: { Applied: user }
+      //  }
+      const result = await contestsCollection.updateOne({ _id: new ObjectId(id) },
+        { $push: { Applied: user } })
+      res.send(result)
     })
 
 
-    app.patch('/winner/contest/:id', async(req,res)=>{
+    app.patch('/winner/contest/:id', async (req, res) => {
       const id = req.params.id
       const user = req.body
-      const {Email,Name,Photo} = user
-      console.log('winner user:', Email,Name,Photo)
-      const filter = {_id: new ObjectId(id)}
+      const { Email, Name, Photo } = user
+      console.log('winner user:', Email, Name, Photo)
+      const filter = { _id: new ObjectId(id) }
       const docUpdate = {
-        $set:{
+        $set: {
           ContestWinner: user
         }
       }
@@ -329,7 +337,7 @@ async function run() {
 
 
     //to delete users by Admin
-    app.delete('/users/:id', async (req, res) => {
+    app.delete('/users/:id', verifyToken, async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
       const result = await usersCollection.deleteOne(query)
@@ -367,7 +375,7 @@ async function run() {
 
 
     //to make user contest creator
-    app.patch('/users/creator/:id', async (req, res) => {
+    app.patch('/users/creator/:id',verifyToken, async (req, res) => {
       const id = req.params.id
       const filter = { _id: new ObjectId(id) }
       const updatedDoc = {
@@ -381,7 +389,7 @@ async function run() {
 
 
 
-    app.patch('/user/block/:id', async (req, res) => {
+    app.patch('/user/block/:id', verifyToken, async (req, res) => {
       const id = req.params.id
       const status = req.body.toggle
       console.log('status is:', status);
@@ -400,7 +408,7 @@ async function run() {
     //     <------ Card Payment related API -------->
 
 
-    
+
     // app.post("/create-payment-intent", async (req, res) => {
     //   const { price } = req.body;
     //   const amount = parseInt(price * 100);
@@ -423,10 +431,10 @@ async function run() {
 
 
 
-    
+
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
